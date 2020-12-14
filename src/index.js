@@ -14,7 +14,7 @@ app.get("/totalRecovered",async(req,res)=>{
 });
 
 app.get("/totalActive",async(req,res)=>{
-    const totalActive = await connection.aggregate([{$group:{_id:"total",active:{$sum: "$infected"}}}]);
+    const totalActive = await connection.aggregate([{$group:{_id:"total",active:{$sum:{$subtract: ["$infected","$recovered"]}}}}]);
     res.send({data: totalActive[0]});
 });
 app.get("/totalDeath",async(req,res)=>{
