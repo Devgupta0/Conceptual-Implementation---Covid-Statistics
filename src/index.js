@@ -22,20 +22,27 @@ app.get("/totalDeath",async(req,res)=>{
     res.send({data:totalDeath[0]});
 });
 app.get("/hotspotStates",async(req,res)=>{
-    const allData=await connection.find();
-    let hostspot=0;
-    let myres=[];
-    allData.forEach((data)=>{
-        hotspot=((data.infected - data.recovered)/data.infected)
-        hotspot = Math.round(hotspot*100000)/100000;
-        if(hotspot>0.1)
-            myres.push({state: data.state, rate: hotspot});  
-    }
-
-    );
-    res.send({data:myres});
+    const hotspotStates =await connection.aggregate([{$project:{
+        _id:false,
+        state:"$state",
+        rate:{
+            $round:[
+                {
+                    $divide:[
+                        {$subtract:["$infected","$recovered"]},"$infected"]},5]}}},{$match:{rate:{$gt:0.1}}}]);
+    res.send({data:hotspotStates});
 });
-
+app.get("/healthyStates",async(req,res)=>{
+    const healthyStates = await connection.aggregate([{$project:{
+        _id:false,
+        state:"$state",
+        mortality:{
+            $round:[
+                {
+                    $divide:["$death","$infected"]
+                },5]}}},{$match:{mortality:{$lt:0.005}}}]);
+    res.send({data:healthyStates});
+});
 
 app.listen(port, () => console.log(`App listening on port ${port}!`))
 
